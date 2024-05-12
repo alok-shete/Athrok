@@ -3,6 +3,8 @@
   "version": "0.0.1-alpha",
   "description": "A small, simple, and fast state management solution for React and React Native",
   "main": "src/index.ts",
+  "module": "src/index.mjs",
+  "types": "src/index.d.ts",
   "homepage": "https://github.com/alok-shete/athrok#readme",
   "publishConfig": {
     "@alok-shete:registry": "https://npm.pkg.github.com"
@@ -15,7 +17,7 @@
     "url": "git+https://github.com/alok-shete/athrok.git"
   },
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "build": "tsup src/index.ts --format cjs,esm --dts && node build.js",
     "release": "pnpm run build",
     "lint": "tsc"
   },
