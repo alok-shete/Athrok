@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Store } from '../store/store';
+import { ANY } from '../utils/types';
 
 /**
  * Custom hook for integrating a store with React components.
@@ -26,8 +27,8 @@ import { Store } from '../store/store';
  * ```
  */
 export const useAStore = <
-  T extends Record<any, any> = Record<any, any>,
-  R extends Record<any, any> = Record<any, any>,
+  T extends Record<ANY, ANY> = Record<ANY, ANY>,
+  R extends Record<ANY, ANY> = Record<ANY, ANY>,
   S = T & R,
 >(
   store: Store<T, R>,
