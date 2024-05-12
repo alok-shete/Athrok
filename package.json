@@ -1,17 +1,34 @@
 {
   "name": "athrok",
-  "version": "1.0.1",
-  "description": "",
+  "version": "0.0.1-alpha",
+  "description": "A small, simple, and fast state management solution for React and React Native",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "homepage": "https://github.com/alok-shete/athrok#readme",
+  "publishConfig": {
+    "@alok-shete:registry": "https://npm.pkg.github.com"
+  },
+  "bugs": {
+    "url": "https://github.com/alok-shete/athrok/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alok-shete/athrok.git"
+  },
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "release": "pnpm run build",
-    "lint": "tsc"
+    "lint": "tsc",
+    "postinstall": "npm build"
   },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
   "keywords": [],
-  "author": "",
+  "author": "Alok Shete",
   "license": "ISC",
   "devDependencies": {
     "@types/react": "*",
