@@ -1,0 +1,61 @@
+import { useState, useEffect } from 'react';
+import { Store } from '../store/store';
+
+/**
+ * Custom hook for integrating a store with React components.
+ *
+ * This hook allows React components to subscribe to a store and automatically update
+ * when the store state changes. It also provides support for selecting specific parts
+ * of the store state and actions using a selector function.
+ *
+ * @param store - The store instance to integrate with the component.
+ * @param selector - Optional selector function to derive a subset of state and actions.
+ * @returns The selected state or the entire store state and actions based on the provided selector.
+ *
+ * @template T - Type of the store's state.
+ * @template R - Type of the store's actions.
+ * @template S - Type of the selected state.
+ *
+ * @example
+ * ```tsx
+ * // Using the hook with a store instance
+ * const Component = () => {
+ *   const selectedState = useAStore(store);
+ *   // Use selectedState in the component
+ * };
+ * ```
+ */
+export const useAStore = <
+  T extends Record<any, any> = Record<any, any>,
+  R extends Record<any, any> = Record<any, any>,
+  S = T & R,
+>(
+  store: Store<T, R>,
+  selector: (state: T & R) => S = (state) => state
+): S => {
+  const [selectedState, setSelectedState] = useState<S>(getStateWithSelector);
+
+  useEffect(() => {
+    // Subscribe to store updates and update selected state accordingly
+    const unsubscribe = store.subscribe(() =>
+      setSelectedState(getStateWithSelector())
+    );
+
+    // Clean up subscription on unmount
+    return () => unsubscribe();
+  }, [store, selector]);
+
+  /**
+   * Gets the selected state or the entire store state and actions based on the provided selector.
+   *
+   * If a selector function is provided, it is used to derive a subset of state and actions.
+   * Otherwise, the entire store state and actions are returned.
+   *
+   * @returns {T & R | S | undefined} - Selected state, entire store state, or undefined if no selector is provided.
+   */
+  function getStateWithSelector() {
+    return selector({ ...store.getState(), ...store.actions });
+  }
+
+  return selectedState;
+};
