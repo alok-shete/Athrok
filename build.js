@@ -55,6 +55,7 @@ const build = async () => {
   // Modify package.json as needed
   delete packageJson.scripts;
   delete packageJson.devDependencies;
+  delete packageJson.files;
   packageJson.main = 'index.js';
   packageJson.module = 'index.mjs';
   packageJson.types = 'index.d.ts';
