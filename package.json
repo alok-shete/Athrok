@@ -30,6 +30,7 @@
   "author": "Alok Shete",
   "license": "ISC",
   "devDependencies": {
+    "@types/node": "^20.12.12",
     "@types/react": "*",
     "@typescript-eslint/eslint-plugin": "^7.8.0",
     "@typescript-eslint/parser": "^7.8.0",
