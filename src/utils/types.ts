@@ -1,10 +1,11 @@
-import { Store } from "../store/store";
+import { Store } from '../store/store';
 
 /**
  * Represents any type.
  * @typedef ANY
  * @type {any}
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ANY = any;
 
 /**
@@ -12,26 +13,40 @@ export type ANY = any;
  * @typedef IAthrokStoreListener
  * @type {() => void}
  */
-export type IAthrokStoreListener<T> = (state:T) => void;
-
-/**
- * Configuration for persisting the state of the store.
- * @interface IAthrokPersistConfig
- */
-export interface IAthrokPersistConfig {
-  /** Name identifier for the persisted state. */
-  name: string;
-  /** Optional debounce time in milliseconds for reducing the frequency of state persistence (default is 200ms). */
-  debounceTime?: number;
-}
+export type IAthrokStoreListener<T> = (state: T) => void;
 
 /**
  * Configuration options for the store.
  * @interface IAthrokStoreConfig
  */
-export interface IAthrokStoreConfig {
+export interface IAthrokStoreConfig<T> {
   /** Optional configuration for persisting the state. */
-  persist?: IAthrokPersistConfig;
+  persist?: IAthrokPersistConfig<T>;
+}
+
+export interface IAthrokPersistConfig<T> {
+  /** Name identifier for the persisted state. */
+  name: string;
+  /** Optional debounce time in milliseconds for reducing the frequency of state persistence (default is 200ms). */
+  debounceTime?: number;
+  /** Optional version number for migration. */
+  version?: number;
+  /**
+   * Function to migrate the persisted state to the current state type.
+   * @param persistedState The persisted state to migrate.
+   * @param initialState The initial state.
+   * @param version The version number for migration (if provided).
+   * @returns The migrated state.
+   */
+  migrate?: (storedValue: ANY, version?: number) => ANY;
+  /**
+   * Function to create a partial state from the current state.
+   * @param state The current state.
+   * @returns The partial state.
+   */
+  partial?: (state: T) => Partial<T>;
+
+  merge?: (initialValue: T, storedValue: ANY) => ANY;
 }
 
 /**

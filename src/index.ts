@@ -17,7 +17,12 @@ import {
 
 import { Store, createStore } from './store/store';
 import { State, createState } from './store/state';
-import { StorageManager } from './store/storage';
+import {
+  StorageManager,
+  clearPersistence,
+  getPersistanceKeys,
+} from './store/storage';
+import { deepMerge, shallowMerge } from './utils/functions';
 
 /**
  * The Athrok library namespace, providing access to its features.
@@ -42,10 +47,25 @@ const Athrok = {
 
   State,
   createState,
+  shallowMerge,
+  deepMerge,
+  clearPersistence,
+  getPersistanceKeys,
 };
 
 // Export individual components for ease of use
-export { useAStore, Store, createStore, StorageManager, State, createState };
+export {
+  useAStore,
+  Store,
+  createStore,
+  StorageManager,
+  State,
+  createState,
+  shallowMerge,
+  deepMerge,
+  clearPersistence,
+  getPersistanceKeys,
+};
 
 // Export types for external use
 export type {

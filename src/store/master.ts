@@ -1,92 +1,101 @@
-import { ATHROK_KEY_LABEL } from '../utils/constants';
+import { NotFound, isObject, shallowMerge } from '../utils/functions';
 import { IAthrokStoreConfig, IAthrokStoreListener } from '../utils/types';
 import { StorageHandler } from './storage';
 
 export class Master<T> {
   protected listeners: Set<IAthrokStoreListener<T>>; // Set of store listeners
-  protected actualState: T | null = null; // Current actual state
-  protected initialState: T; // Initial state of the store
-  protected storageHandler: StorageHandler | null = null; // Storage handler for persistence
-  protected persistName: string | null = null; // Name for persistence
+  protected actualValue: T | null = null; // Current actual value
+  protected initialValue: T; // Initial value of the store
+  protected storageHandler: StorageHandler<T> | null = null; // Storage handler for persistence
+  protected isInitialized = false;
+  protected type: string;
 
-  constructor(initialState: T, config?: IAthrokStoreConfig) {
+  constructor(initialValue: T, config?: IAthrokStoreConfig<T>) {
+    if (new.target === Master) {
+      throw new Error('Parent class cannot be instantiated directly.');
+    }
+    this.type = this.constructor.name;
     this.listeners = new Set<IAthrokStoreListener<T>>();
-    this.initialState = initialState;
+    this.initialValue = initialValue;
 
     // Initialize storage handler if persistence is configured
     if (typeof config?.persist?.name === 'string') {
-      this.persistName = `${ATHROK_KEY_LABEL}${config.persist.name}`;
-      this.storageHandler = new StorageHandler(this.persistName);
+      this.storageHandler = new StorageHandler<T>(config.persist);
     }
   }
 
   /**
-   * Updates the state of the store with the provided update.
+   * Updates the value of the store with the provided update.
    *
-   * This method allows updating the store's state by providing either a new state
-   * object directly or a function that generates a new state based on the current state.
-   * After updating the state, it notifies all subscribed listeners and persists the
-   * updated state data to storage with an optional debounce mechanism.
+   * This method allows updating the store's value by providing either a new value
+   * object directly or a function that generates a new value based on the current value.
+   * After updating the value, it notifies all subscribed listeners and persists the
+   * updated value data to storage with an optional debounce mechanism.
    *
-   * @param update - The new state object or function to generate the new state.
+   * @param update - The new value object or function to generate the new value.
    *
    * @example
    * ```typescript
    * // Define an action to increment the count in the store
    * const incrementCount = () => {
-   *   counterStore.setState((currentState) => ({
-   *     ...currentState,
-   *     count: currentState.count + 1,
+   *   counterStore.setValue((currentValue) => ({
+   *     ...currentValue,
+   *     count: currentValue.count + 1,
    *   }));
    * };
    *
    * // Define an action to set the count to a specific value in the store
    * const setCount = (value: number) => {
-   *   counterStore.setState({ count: value });
+   *   counterStore.setValue({ count: value });
    * };
    *
-   * // Dispatch actions to update the store's state
+   * // Dispatch actions to update the store's value
    * incrementCount(); // Increment the count by 1
    * setCount(10); // Set the count to 10
    * ```
    */
 
-  setState(update: ((currentState: T) => T) | T) {
-    this.actualState =
+  set(update: ((currentValue: T) => T) | T) {
+    this.actualValue =
       typeof update === 'function'
-        ? (update as (currentState: T) => T)(this.state)
+        ? (update as (currentValue: T) => T)(this.get())
         : (update as T);
-    this.listeners.forEach((listener) => listener(this.getState()));
+    this.listeners.forEach((listener) => listener(this.get()));
 
-    // Persist state data to storage with optional debounce
-    this.storageHandler?.setItem<T>(this.state);
+    // Persist value data to storage with optional debounce
+
+    this.storageHandler?.setItem<T>(this.get());
   }
 
   /**
-   * Retrieves the current state of the store.
+   * Retrieves the current value of the store.
    *
-   * This method returns the current state of the store. If the actual state
-   * has not been initialized yet, it retrieves the state from storage, if available,
-   * and combines it with the initial state to ensure consistency.
+   * This method returns the current value of the store. If the actual value
+   * has not been initialized yet, it retrieves the value from storage, if available,
+   * and combines it with the initial value to ensure consistency.
    *
-   * @returns The current state of the store.
+   * @returns The current value of the store.
    *
    * @example
    * ```typescript
-   * // Retrieve the current state of the counter store
-   * const currentState = counterStore.getState();
-   * console.log('Current count:', currentState.count);
+   * // Retrieve the current value of the counter store
+   * const currentValue = counterStore.getValue();
+   * console.log('Current count:', currentValue.count);
    * ```
    */
-  getState() {
-    return this.state;
+  get() {
+    if (!this.isInitialized) {
+      this.initializeValue();
+      this.isInitialized = true;
+    }
+    return this.actualValue as T;
   }
 
   /**
-   * Subscribes a listener function to state changes in the store.
+   * Subscribes a listener function to value changes in the store.
    *
    * This method allows registering a listener function that will be called
-   * whenever the state of the store changes. It returns a function to unsubscribe
+   * whenever the value of the store changes. It returns a function to unsubscribe
    * the listener when it's no longer needed.
    *
    * @param listener - The listener function to be subscribed.
@@ -94,17 +103,17 @@ export class Master<T> {
    *
    * @example
    * ```typescript
-   * // Define a listener function to log state changes
-   * const logStateChanges = () => {
-   *   console.log('State changed:', counterStore.getState());
+   * // Define a listener function to log value changes
+   * const logValueChanges = () => {
+   *   console.log('Value changed:', counterStore.getValue());
    * };
    *
-   * // Subscribe the listener to state changes in the counter store
-   * const unsubscribe = counterStore.subscribe(logStateChanges);
+   * // Subscribe the listener to value changes in the counter store
+   * const unsubscribe = counterStore.subscribe(logValueChanges);
    *
-   * // Dispatch actions to update the store's state
-   * counterStore.actions.increment(); // Output: State changed: { count: 1 }
-   * counterStore.actions.decrement(); // Output: State changed: { count: 0 }
+   * // Dispatch actions to update the store's value
+   * counterStore.actions.increment(); // Output: Value changed: { count: 1 }
+   * counterStore.actions.decrement(); // Output: Value changed: { count: 0 }
    *
    * // Unsubscribe the listener when no longer needed
    * unsubscribe();
@@ -118,24 +127,43 @@ export class Master<T> {
   }
 
   /**
-   * Retrieves the current state of the store, initializing from storage if necessary.
+   * Retrieves the current value of the store, initializing from storage if necessary.
    * @private
-   * @returns The current state of the store.
+   * @returns The current value of the store.
    */
-  private get state() {
-    if (this.persistName && !this.storageHandler) {
-      console.warn(
-        `
-          try to access storage before initialize
-          `
-      );
+  private initializeValue() {
+    this.actualValue = this.initialValue;
+    const storedValue = this.storageHandler
+      ? this.storageHandler?.getItem<T>()
+      : new NotFound();
+    this.storageHandler;
+
+    if (!(storedValue instanceof NotFound)) {
+      const mergeFunction = this.storageHandler?.config.merge ?? shallowMerge;
+      switch (this.type) {
+        case 'State': {
+          if (isObject(this.initialValue) && isObject(storedValue)) {
+            this.actualValue = mergeFunction(
+              this.actualValue as any,
+              storedValue as Object
+            ) as T;
+          } else {
+            this.actualValue = storedValue;
+          }
+
+          break;
+        }
+        case 'Store': {
+          this.actualValue = mergeFunction(
+            this.actualValue as any,
+            storedValue ?? ({} as Object)
+          ) as T;
+
+          break;
+        }
+      }
     }
-    if (!this.actualState) {
-      this.actualState = {
-        ...this.initialState,
-        ...this.storageHandler?.getItem<T>(),
-      };
-    }
-    return this.actualState;
+
+    return this.actualValue as T;
   }
 }

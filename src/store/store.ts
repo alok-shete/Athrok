@@ -2,13 +2,13 @@ import { ANY, IAthrokStoreCallback, IAthrokStoreConfig } from '../utils/types';
 import { Master } from './master';
 
 /**
- * Represents a state management store with actions and optional persistence.
+ * Represents a value management store with actions and optional persistence.
  *
- * This class manages the application state, provides methods for updating the state,
- * and supports subscribing to state changes. It can also persist state data to storage
+ * This class manages the application value, provides methods for updating the value,
+ * and supports subscribing to value changes. It can also persist value data to storage
  * with optional debounce functionality.
  *
- * @template T - Type of the store's state.
+ * @template T - Type of the store's value.
  * @template R - Type of the store's actions.
  */
 export class Store<
@@ -19,23 +19,19 @@ export class Store<
 
   /**
    * Constructs a new instance of the Store.
-   * @param initialState - The initial state of the store.
+   * @param initialState - The initial value of the store.
    * @param callback - Callback function to generate actions based on store methods.
    * @param config - Optional configuration for persistence.
    */
   constructor(
     initialState: T,
     callback: IAthrokStoreCallback<T, R>,
-    config?: IAthrokStoreConfig
+    config?: IAthrokStoreConfig<T>
   ) {
     super(initialState, config);
 
     // Generate actions using the provided callback function
-    this.actions = callback(
-      this.setState.bind(this),
-      this.getState.bind(this),
-      this
-    );
+    this.actions = callback(this.set.bind(this), this.get.bind(this), this);
   }
 }
 
@@ -45,10 +41,9 @@ export const createStore = <
 >(
   initialState: T,
   callback: IAthrokStoreCallback<T, R>,
-  config?: IAthrokStoreConfig
+  config?: IAthrokStoreConfig<T>
 ): Store<T, R> => {
   const store = new Store(initialState, callback, config);
 
   return store;
 };
-

@@ -7,7 +7,7 @@ export class State<T> extends Master<T> {
    * @param initialState - The initial state of the store.
    * @param config - Optional configuration for persistence.
    */
-  constructor(initialState: T, config?: IAthrokStoreConfig) {
+  constructor(initialState: T, config?: IAthrokStoreConfig<T>) {
     super(initialState, config);
   }
 }
@@ -53,7 +53,7 @@ export class State<T> extends Master<T> {
 
 export const createState = <T>(
   initialState: T,
-  config?: IAthrokStoreConfig
+  config?: IAthrokStoreConfig<T>
 ): State<T> => {
   const state = new State(initialState, config);
 

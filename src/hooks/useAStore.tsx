@@ -55,7 +55,7 @@ export const useAStore = <
    * @returns {T & R | S | undefined} - Selected state, entire store state, or undefined if no selector is provided.
    */
   function getStateWithSelector() {
-    return selector({ ...store.getState(), ...store.actions });
+    return selector({ ...store.get(), ...store.actions });
   }
 
   return selectedState;

@@ -1,6 +1,16 @@
 import { ATHROK_CONFIG_LABEL, ATHROK_KEY_LABEL } from '../utils/constants';
-import { checkStartString, isPromise } from '../utils/functions';
-import { ANY, IAthrokAsyncStorage, IAthrokSyncStorage } from '../utils/types';
+import {
+  NotFound,
+  checkStartString,
+  isObject,
+  isPromise,
+} from '../utils/functions';
+import {
+  ANY,
+  IAthrokAsyncStorage,
+  IAthrokPersistConfig,
+  IAthrokSyncStorage,
+} from '../utils/types';
 
 /**
  * Manages storage and persistence for application data.
@@ -9,24 +19,28 @@ import { ANY, IAthrokAsyncStorage, IAthrokSyncStorage } from '../utils/types';
  * and synchronizing persistence configuration with the storage.
  */
 export class StorageManager {
-  /** The singleton instance of the StorageManager. */
-  static Instance: StorageManager | null = null;
-
   /** The storage interface used for persistence. */
   static storage: IAthrokAsyncStorage | IAthrokSyncStorage | null = null;
 
   /** Holds persistent data mapped by keys. */
-  static persistData: Record<string, ANY> = {};
+  static persistData: Record<
+    string,
+    {
+      value: ANY;
+      version?: number;
+    }
+  > = {};
 
   /** Set of keys to be persisted. */
-  private static persistenceKeys: Set<string> = new Set([]);
+  static persistenceKeys: Set<string> = new Set([]);
+
+  static isPersistDataRestored = false;
 
   /**
    * Constructs a new instance of the StorageManager.
    * @param config - Configuration object containing the storage interface.
    */
   constructor(config: { storage: IAthrokAsyncStorage | IAthrokSyncStorage }) {
-    StorageManager.Instance = this;
     StorageManager.storage = config.storage;
   }
 
@@ -59,16 +73,20 @@ export class StorageManager {
     StorageManager.syncPersistentConfig();
 
     // Load persisted data into memory
-    await Promise.all(
+    const allStoragePromises = Promise.all(
       Array.from(StorageManager.persistenceKeys).map(async (key: string) => {
-        const value = isAsync
-          ? await storage.getItem(key)
-          : (storage.getItem(key) as string);
+        const getPromise = storage.getItem(key);
+        const value = isAsync ? await getPromise : (getPromise as string);
         if (value && checkStartString(key, ATHROK_KEY_LABEL)) {
           StorageManager.persistData[key] = JSON.parse(value);
         }
       })
     );
+
+    if (isAsync) {
+      await allStoragePromises;
+    }
+    StorageManager.isPersistDataRestored = true;
   }
 
   /**
@@ -77,6 +95,13 @@ export class StorageManager {
    */
   static setPersistenceKey(key: string) {
     StorageManager.persistenceKeys.add(key);
+    StorageManager.syncPersistentConfig();
+  }
+
+  static clearPersistence(key: string) {
+    StorageManager.persistenceKeys.has(key) &&
+      StorageManager.persistenceKeys.delete(key);
+    StorageManager.storage?.removeItem(key);
     StorageManager.syncPersistentConfig();
   }
 
@@ -100,17 +125,19 @@ export class StorageManager {
  * This class provides methods for getting and setting data associated with a key,
  * and automatically persists the data to storage with a debounce mechanism.
  */
-export class StorageHandler {
+export class StorageHandler<T> {
   #key: string; // The key associated with the stored data
-  #timeoutId: number | undefined; // Timeout ID for debounce mechanism
+  #timeoutId: NodeJS.Timeout | undefined; // Timeout ID for debounce mechanism
+  config: IAthrokPersistConfig<T>;
 
   /**
    * Constructs a new instance of the StorageHandler.
    * @param key - The key associated with the stored data.
    */
-  constructor(key: string) {
-    this.#key = key;
-    StorageManager.setPersistenceKey(key); // Set the key for persistence
+  constructor(persisConfig: IAthrokPersistConfig<T>) {
+    this.#key = `${ATHROK_KEY_LABEL}${persisConfig.name}`;
+    this.config = persisConfig;
+    StorageManager.setPersistenceKey(this.#key); // Set the key for persistence
   }
 
   /**
@@ -118,8 +145,20 @@ export class StorageHandler {
    * @returns The stored data or an empty object if data is not found.
    * @template T - The type of the stored data.
    */
-  public getItem<T>(): T {
-    return (StorageManager.persistData[this.#key] ?? {}) as T;
+  public getItem<T>(): T | NotFound {
+    if (!isObject(StorageManager.persistData[this.#key])) {
+      return new NotFound() as T;
+    }
+    const { value, version } = StorageManager.persistData[this.#key] ?? {};
+
+    if (this.config.version !== version) {
+      if (this.config.migrate) {
+        return this.config.migrate(value) as T;
+      }
+      return new NotFound();
+    }
+
+    return value as T;
   }
 
   /**
@@ -130,8 +169,27 @@ export class StorageHandler {
   public setItem<T>(data: T) {
     clearTimeout(this.#timeoutId); // Clear previous timeout
     this.#timeoutId = setTimeout(() => {
+      const version = this.config.version;
       // Set new timeout for debounce mechanism
-      StorageManager.storage?.setItem(this.#key, JSON.stringify(data));
-    }, 100); // Debounce time: 100ms
+      const partialData = this.config.partial
+        ? this.config.partial(data as ANY)
+        : data;
+
+      StorageManager.storage?.setItem(
+        this.#key,
+        JSON.stringify({
+          value: partialData,
+          version: version,
+        })
+      );
+    }, this.config.debounceTime ?? 100); // Debounce time: 100ms
   }
 }
+
+export const getPersistanceKeys = () => {
+  return Array.from(StorageManager.persistenceKeys);
+};
+
+export const clearPersistence = (key: string) => {
+  StorageManager.clearPersistence(key);
+};
