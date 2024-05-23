@@ -5,6 +5,7 @@
  */
 
 import { useAStore } from './hooks/useAStore';
+import { useAState } from './hooks/useAState';
 import {
   IAthrokStoreListener,
   IAthrokSetState,
@@ -56,6 +57,7 @@ const Athrok = {
 // Export individual components for ease of use
 export {
   useAStore,
+  useAState,
   Store,
   createStore,
   StorageManager,
