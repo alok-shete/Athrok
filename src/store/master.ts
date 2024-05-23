@@ -18,6 +18,10 @@ export class Master<T> {
     this.listeners = new Set<IAthrokStoreListener<T>>();
     this.initialValue = initialValue;
 
+    this.set = this.set.bind(this);
+    this.get = this.get.bind(this);
+  
+
     // Initialize storage handler if persistence is configured
     if (typeof config?.persist?.name === 'string') {
       this.storageHandler = new StorageHandler<T>(config.persist);
