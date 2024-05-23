@@ -13,6 +13,6 @@ export const useAState = <T,>(
     // Clean up subscription on unmount
     return () => unsubscribe();
   }, [state]);
-
-  return [selectedState, setSelectedState];
+  
+  return [selectedState, state.set];
 };
