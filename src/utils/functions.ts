@@ -1,4 +1,4 @@
-import { ANY } from './types';
+import { ANY } from "./types";
 
 /**
  * Checks if a given function name starts with a specified string.
@@ -43,7 +43,7 @@ export function isArray<T>(value: T): boolean {
 export class NotFound {}
 
 export const isObject = <T>(item: T): boolean => {
-  return item && typeof item === 'object' && !Array.isArray(item);
+  return (item && typeof item === "object" && !Array.isArray(item)) || false;
 };
 
 export const shallowMerge = <T extends object = Record<string, any>>(
@@ -78,7 +78,7 @@ export const deepMerge = <T extends object = Record<string, any>>(
 
 export class LOG {
   private static wrapConsoleForNonProd<T>(fun: T) {
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV !== "production") {
       return fun;
     }
     return (...rest: ANY[]) => {

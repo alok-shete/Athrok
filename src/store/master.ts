@@ -1,30 +1,34 @@
-import { NotFound, isObject, shallowMerge } from '../utils/functions';
-import { IAthrokStoreConfig, IAthrokStoreListener } from '../utils/types';
-import { StorageHandler } from './storage';
-
-export class Master<T> {
+import {
+  StorageHandler,
+  UninitializedStorageHandler,
+} from "../storage/handler";
+import { NotFound, isObject } from "../utils/functions";
+import { IAthrokStoreConfig, IAthrokStoreListener } from "../utils/types";
+export class AthrokMaster<T> {
   protected listeners: Set<IAthrokStoreListener<T>>; // Set of store listeners
-  protected actualValue: T | null = null; // Current actual value
+  protected currentValue: T; // Current actual value
   protected initialValue: T; // Initial value of the store
-  protected storageHandler: StorageHandler<T> | null = null; // Storage handler for persistence
-  protected isInitialized = false;
-  protected type: string;
+  protected storageHandler: StorageHandler<T> | UninitializedStorageHandler<T> =
+    new UninitializedStorageHandler(); // Storage handler for persistence
+  protected type: string = "";
+  private fetchCurrentState: () => T;
 
   constructor(initialValue: T, config?: IAthrokStoreConfig<T>) {
-    if (new.target === Master) {
-      throw new Error('Parent class cannot be instantiated directly.');
+    if (new.target === AthrokMaster) {
+      throw new Error("Parent class cannot be instantiated directly.");
     }
-    this.type = this.constructor.name;
+    // this.type = this.constructor.name;
     this.listeners = new Set<IAthrokStoreListener<T>>();
-    this.initialValue = initialValue;
-
+    this.initialValue = initialValue; // need to deep clone
+    this.currentValue = this.initialValue;
     this.set = this.set.bind(this);
+    this.subscribe = this.subscribe.bind(this);
     this.get = this.get.bind(this);
-  
+    this.fetchCurrentState = this.initializeValue;
 
     // Initialize storage handler if persistence is configured
-    if (typeof config?.persist?.name === 'string') {
-      this.storageHandler = new StorageHandler<T>(config.persist);
+    if (typeof config?.name === "string" && config.persist?.enable) {
+      this.storageHandler = new StorageHandler<T>(config.name, config.persist);
     }
   }
 
@@ -59,16 +63,16 @@ export class Master<T> {
    * ```
    */
 
-  set(update: ((currentValue: T) => T) | T) {
-    this.actualValue =
-      typeof update === 'function'
-        ? (update as (currentValue: T) => T)(this.get())
-        : (update as T);
-    this.listeners.forEach((listener) => listener(this.get()));
+  set(updateAction: React.SetStateAction<T>) {
+    this.fetchCurrentState();
+    this.currentValue =
+      typeof updateAction === "function"
+        ? (updateAction as (prevState: T) => T)(this.currentValue)
+        : updateAction;
+    this.listeners.forEach((listener) => listener(this.currentValue));
 
-    // Persist value data to storage with optional debounce
-
-    this.storageHandler?.setItem<T>(this.get());
+    // Persist the current value to storage with optional debounce
+    this.storageHandler.setItem<T>(this.currentValue);
   }
 
   /**
@@ -87,13 +91,6 @@ export class Master<T> {
    * console.log('Current count:', currentValue.count);
    * ```
    */
-  get() {
-    if (!this.isInitialized) {
-      this.initializeValue();
-      this.isInitialized = true;
-    }
-    return this.actualValue as T;
-  }
 
   /**
    * Subscribes a listener function to value changes in the store.
@@ -124,10 +121,17 @@ export class Master<T> {
    * ```
    */
   subscribe(listener: IAthrokStoreListener<T>): () => void {
+    // Add the listener to the set of listeners
     this.listeners.add(listener);
+
+    // Return a function to unsubscribe the listener
     return () => {
       this.listeners.delete(listener);
     };
+  }
+
+  get() {
+    return this.fetchCurrentState();
   }
 
   /**
@@ -135,31 +139,28 @@ export class Master<T> {
    * @private
    * @returns The current value of the store.
    */
-  private initializeValue() {
-    this.actualValue = this.initialValue;
-    const storedValue = this.storageHandler
-      ? this.storageHandler?.getItem<T>()
-      : new NotFound();
-    this.storageHandler;
-
-    if (!(storedValue instanceof NotFound)) {
-      const mergeFunction = this.storageHandler?.config.merge ?? shallowMerge;
+  private initializeValue = () => {
+    const storedValue = this.storageHandler.getItem<T>();
+    if (
+      !(storedValue instanceof NotFound) &&
+      this.storageHandler instanceof StorageHandler
+    ) {
       switch (this.type) {
-        case 'State': {
+        case "AthrokState": {
           if (isObject(this.initialValue) && isObject(storedValue)) {
-            this.actualValue = mergeFunction(
-              this.actualValue as any,
+            this.currentValue = this.storageHandler.config.merge(
+              this.currentValue as any,
               storedValue as Object
             ) as T;
           } else {
-            this.actualValue = storedValue;
+            this.currentValue = storedValue;
           }
 
           break;
         }
-        case 'Store': {
-          this.actualValue = mergeFunction(
-            this.actualValue as any,
+        case "AthrokStore": {
+          this.currentValue = this.storageHandler.config.merge(
+            this.currentValue as any,
             storedValue ?? ({} as Object)
           ) as T;
 
@@ -168,6 +169,10 @@ export class Master<T> {
       }
     }
 
-    return this.actualValue as T;
-  }
+    this.fetchCurrentState = () => {
+      return this.currentValue as T;
+    };
+
+    return this.currentValue as T;
+  };
 }

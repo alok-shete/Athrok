@@ -4,8 +4,18 @@
  * It offers efficient data persistence and seamless integration with various storage mechanisms.
  */
 
-import { useAStore } from './hooks/useAStore';
-import { useAState } from './hooks/useAState';
+import { useAStore } from "./hooks/useAStore";
+import { useAState } from "./hooks/useAState";
+
+import { AthrokStore, createStore } from "./store/store";
+import { AthrokState, createState } from "./store/state";
+import {
+  StorageManager,
+  clearPersistence,
+  getPersistanceKeys,
+} from "./storage/manager";
+import { deepMerge, shallowMerge } from "./utils/functions";
+
 import {
   IAthrokStoreListener,
   IAthrokSetState,
@@ -14,16 +24,7 @@ import {
   IAthrokGetState,
   IAthrokAsyncStorage,
   IAthrokSyncStorage,
-} from './utils/types';
-
-import { Store, createStore } from './store/store';
-import { State, createState } from './store/state';
-import {
-  StorageManager,
-  clearPersistence,
-  getPersistanceKeys,
-} from './store/storage';
-import { deepMerge, shallowMerge } from './utils/functions';
+} from "./utils/types";
 
 /**
  * The Athrok library namespace, providing access to its features.
@@ -33,10 +34,11 @@ const Athrok = {
    * Hook for accessing the store in functional components.
    */
   useAStore: useAStore,
+  useAState,
   /**
    * Class representing the store for managing application state.
    */
-  Store,
+  AthrokStore,
   /**
    * Utility class for managing storage-related operations.
    */
@@ -46,7 +48,7 @@ const Athrok = {
    */
   createStore: createStore,
 
-  State,
+  AthrokState,
   createState,
   shallowMerge,
   deepMerge,
@@ -58,11 +60,11 @@ const Athrok = {
 export {
   useAStore,
   useAState,
-  Store,
   createStore,
-  StorageManager,
-  State,
   createState,
+  StorageManager,
+  AthrokState,
+  AthrokStore,
   shallowMerge,
   deepMerge,
   clearPersistence,

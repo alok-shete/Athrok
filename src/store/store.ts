@@ -1,5 +1,5 @@
-import { ANY, IAthrokStoreCallback, IAthrokStoreConfig } from '../utils/types';
-import { Master } from './master';
+import { ANY, IAthrokStoreCallback, IAthrokStoreConfig } from "../utils/types";
+import { AthrokMaster } from "./master";
 
 /**
  * Represents a value management store with actions and optional persistence.
@@ -11,14 +11,14 @@ import { Master } from './master';
  * @template T - Type of the store's value.
  * @template R - Type of the store's actions.
  */
-export class Store<
+export class AthrokStore<
   T extends Record<ANY, ANY> = Record<ANY, ANY>,
   R extends Record<ANY, ANY> = Record<ANY, ANY>,
-> extends Master<T> {
+> extends AthrokMaster<T> {
   actions: R; // Actions available in the store
 
   /**
-   * Constructs a new instance of the Store.
+   * Constructs a new instance of the AthrokStore.
    * @param initialState - The initial value of the store.
    * @param callback - Callback function to generate actions based on store methods.
    * @param config - Optional configuration for persistence.
@@ -29,6 +29,7 @@ export class Store<
     config?: IAthrokStoreConfig<T>
   ) {
     super(initialState, config);
+    this.type = "AthrokStore";
 
     // Generate actions using the provided callback function
     this.actions = callback(this.set.bind(this), this.get.bind(this), this);
@@ -42,8 +43,8 @@ export const createStore = <
   initialState: T,
   callback: IAthrokStoreCallback<T, R>,
   config?: IAthrokStoreConfig<T>
-): Store<T, R> => {
-  const store = new Store(initialState, callback, config);
+): AthrokStore<T, R> => {
+  const store = new AthrokStore(initialState, callback, config);
 
   return store;
 };

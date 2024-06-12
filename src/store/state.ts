@@ -1,14 +1,15 @@
-import { IAthrokStoreConfig } from '../utils/types';
-import { Master } from './master';
+import { IAthrokStoreConfig } from "../utils/types";
+import { AthrokMaster } from "./master";
 
-export class State<T> extends Master<T> {
+export class AthrokState<T> extends AthrokMaster<T> {
   /**
-   * Constructs a new instance of the Store.
+   * Constructs a new instance of the AthrokStore.
    * @param initialState - The initial state of the store.
    * @param config - Optional configuration for persistence.
    */
   constructor(initialState: T, config?: IAthrokStoreConfig<T>) {
     super(initialState, config);
+    this.type = "AthrokState";
   }
 }
 
@@ -54,8 +55,8 @@ export class State<T> extends Master<T> {
 export const createState = <T>(
   initialState: T,
   config?: IAthrokStoreConfig<T>
-): State<T> => {
-  const state = new State(initialState, config);
+): AthrokState<T> => {
+  const state = new AthrokState(initialState, config);
 
   return state;
 };

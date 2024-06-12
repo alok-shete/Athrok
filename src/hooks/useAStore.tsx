@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Store } from '../store/store';
-import { ANY } from '../utils/types';
+import { useState, useEffect } from "react";
+import { AthrokStore } from "../store/store";
+import { ANY } from "../utils/types";
 
 /**
  * Custom hook for integrating a store with React components.
@@ -31,15 +31,17 @@ export const useAStore = <
   R extends Record<ANY, ANY> = Record<ANY, ANY>,
   S = T & R,
 >(
-  store: Store<T, R>,
+  store: AthrokStore<T, R>,
   selector: (state: T & R) => S = (state) => state
 ): S => {
-  const [selectedState, setSelectedState] = useState<S>(getStateWithSelector);
+  const [selectedState, setSelectedState] = useState<S>(() =>
+    getStateWithSelector(store.get())
+  );
 
   useEffect(() => {
     // Subscribe to store updates and update selected state accordingly
-    const unsubscribe = store.subscribe(() =>
-      setSelectedState(getStateWithSelector())
+    const unsubscribe = store.subscribe((state) =>
+      setSelectedState(getStateWithSelector(state))
     );
 
     // Clean up subscription on unmount
@@ -54,8 +56,8 @@ export const useAStore = <
    *
    * @returns {T & R | S | undefined} - Selected state, entire store state, or undefined if no selector is provided.
    */
-  function getStateWithSelector() {
-    return selector({ ...store.get(), ...store.actions });
+  function getStateWithSelector(state: T) {
+    return selector({ ...state, ...store.actions });
   }
 
   return selectedState;

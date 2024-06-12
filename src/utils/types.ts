@@ -1,4 +1,4 @@
-import { Store } from '../store/store';
+import { AthrokStore } from "../store/store";
 
 /**
  * Represents any type.
@@ -15,18 +15,14 @@ export type ANY = any;
  */
 export type IAthrokStoreListener<T> = (state: T) => void;
 
-/**
- * Configuration options for the store.
- * @interface IAthrokStoreConfig
- */
-export interface IAthrokStoreConfig<T> {
-  /** Optional configuration for persisting the state. */
-  persist?: IAthrokPersistConfig<T>;
-}
+export type IAthrokStoreConfig<T> =
+  // | { name?: string; persist?: IAthrokPersistConfig<T> }
+  // | ({ persist: IAthrokPersistConfig<T>; name: string } | {});
 
+  | { persist?: undefined; name?: string }
+  | { persist: IAthrokPersistConfig<T>; name: string };
 export interface IAthrokPersistConfig<T> {
-  /** Name identifier for the persisted state. */
-  name: string;
+  enable: boolean;
   /** Optional debounce time in milliseconds for reducing the frequency of state persistence (default is 200ms). */
   debounceTime?: number;
   /** Optional version number for migration. */
@@ -84,7 +80,7 @@ export interface IAthrokAsyncStorage {
  * @typedef IAthrokStoreCallback
  * @template T - Type of the state.
  * @template R - Type of the return value.
- * @type {(setState: (update: ((currentState: T) => T) | T) => void, getState: () => T, store: Store<T, R>) => R}
+ * @type {(setState: (update: ((currentState: T) => T) | T) => void, getState: () => T, store: AthrokStore<T, R>) => R}
  */
 export type IAthrokStoreCallback<
   T extends Record<string, ANY> = Record<string, ANY>,
@@ -92,7 +88,7 @@ export type IAthrokStoreCallback<
 > = (
   setState: (update: ((currentState: T) => T) | T) => void,
   getState: () => T,
-  store: Store<T, R>
+  store: AthrokStore<T, R>
 ) => R;
 
 /**
@@ -120,3 +116,18 @@ export type IAthrokGetState<T = ANY> = () => T;
  * @type {() => R}
  */
 export type IAthrokGetActions<R = ANY> = () => R;
+
+export type DevToolsFeatures = {
+  pause?: boolean;
+  lock?: boolean;
+  persist?: boolean;
+  export?: boolean;
+  import?: string;
+  jump?: boolean;
+  skip?: boolean;
+  reorder?: boolean;
+  dispatch?: boolean;
+};
+
+export type PartiallyRequired<T, K extends keyof T> = Omit<T, K> &
+  Required<Pick<T, K>>;

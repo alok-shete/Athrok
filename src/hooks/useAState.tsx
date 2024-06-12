@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { State } from '../store/state';
+import { useState, useEffect } from "react";
+import { AthrokState } from "../store/state";
 
 export const useAState = <T,>(
-  state: State<T>
+  state: AthrokState<T>
 ): [T, React.Dispatch<React.SetStateAction<T>>] => {
   const [selectedState, setSelectedState] = useState<T>(state.get());
 
@@ -13,6 +13,6 @@ export const useAState = <T,>(
     // Clean up subscription on unmount
     return () => unsubscribe();
   }, [state]);
-  
+
   return [selectedState, state.set];
 };
