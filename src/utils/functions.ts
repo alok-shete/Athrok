@@ -1,57 +1,44 @@
-import { ANY } from "./types";
-
 /**
  * Checks if a given function name starts with a specified string.
- *
- * @param functionName - The name of the function to be checked.
- * @param startString - The string to check if the function name starts with.
- * @returns A boolean indicating whether the function name starts with the specified string.
- *
- * @example
- * ```typescript
- * console.log(checkStartString("calculateArea", "calculate")); // true
- * console.log(checkStartString("calculateVolume", "compute")); // false
- * ```
  */
-export function checkStartString(functionName: string, startString: string) {
-  return functionName.startsWith(startString);
-}
+export const checkStartString = (functionName: string, startString: string) =>
+  functionName.startsWith(startString);
 
 /**
  * Determines whether a given value is a Promise.
- *
- * @param value - The value to be checked.
- * @returns A boolean indicating whether the given value is a Promise.
- *
- * @template T - The type of the value being checked.
- *
- * @example
- * ```typescript
- * const promise = new Promise(resolve => resolve(42));
- * console.log(isPromise(promise)); // true
- * console.log(isPromise(42)); // false
- * ```
  */
-export function isPromise<T>(value: T) {
-  return value instanceof Promise;
-}
+export const isPromise = <T>(value: T) => value instanceof Promise;
 
-export function isArray<T>(value: T): boolean {
-  return Array.isArray(value);
-}
-
+/**
+ * Checks if a given value is an array.
+ */
+export const isArray = <T>(value: T) => Array.isArray(value);
+/**
+ * Represents a placeholder or signal for "not found" scenarios.
+ */
 export class NotFound {}
 
-export const isObject = <T>(item: T): boolean => {
-  return (item && typeof item === "object" && !Array.isArray(item)) || false;
-};
+/**
+ * Checks if a given item is a non-null object (excluding arrays).
+ */
+export const isObject = <T>(item: T) =>
+  (item && typeof item === "object" && !Array.isArray(item)) || false;
 
+/**
+ * Performs a shallow merge of multiple objects into a single object.
+ * @param objects - Objects to merge.
+ * @returns A new object with properties from all input objects shallow merged.
+ */
 export const shallowMerge = <T extends object = Record<string, any>>(
   ...objects: T[]
-): T => {
-  return objects.reduce((prev, cur) => ({ ...prev, ...cur }), {} as T);
-};
+) => objects.reduce((prev, cur) => ({ ...prev, ...cur }), {} as T);
 
+/**
+ * Deep merges multiple objects into a single target object.
+ * @param target - The target object to merge into.
+ * @param sources - Objects to merge into the target.
+ * @returns A new object with properties from all input objects deeply merged.
+ */
 export const deepMerge = <T extends object = Record<string, any>>(
   target: T,
   ...sources: object[]
@@ -72,18 +59,15 @@ export const deepMerge = <T extends object = Record<string, any>>(
 
     return target;
   };
-
   return sources.reduce((prev, cur) => merge(prev, cur), target) as T;
 };
 
+/**
+ * Utility class for conditional logging based on environment.
+ */
 export class LOG {
   private static wrapConsoleForNonProd<T>(fun: T) {
-    if (process.env.NODE_ENV !== "production") {
-      return fun;
-    }
-    return (...rest: ANY[]) => {
-      rest;
-    };
+    return process.env.NODE_ENV !== "production" ? fun : () => {};
   }
   static get debug() {
     return LOG.wrapConsoleForNonProd(console.log);
@@ -94,7 +78,6 @@ export class LOG {
   static get error() {
     return console.error;
   }
-
   static get info() {
     return LOG.wrapConsoleForNonProd(console.info);
   }

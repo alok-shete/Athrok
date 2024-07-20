@@ -173,12 +173,14 @@ describe("clearPersistence", () => {
   it("should clear persistence for a specific key", () => {
     StorageManager.storage = syncStorageMock.create();
     const key = "testKey";
-    StorageManager.persistenceKeys.add(key);
+    StorageManager.persistenceKeys.add(`${ATHROK_KEY_LABEL}${key}`);
 
     clearPersistence(key);
 
     expect(StorageManager.persistenceKeys.has(key)).toBe(false);
-    expect(syncStorageMock.removeItemMock).toHaveBeenCalledWith(key);
+    expect(syncStorageMock.removeItemMock).toHaveBeenCalledWith(
+      `${ATHROK_KEY_LABEL}${key}`
+    );
     expect(syncStorageMock.setItemMock).toHaveBeenCalledWith(
       ATHROK_CONFIG_LABEL,
       JSON.stringify({ keys: [] })

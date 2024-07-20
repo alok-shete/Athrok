@@ -1,6 +1,6 @@
 {
   "name": "athrok",
-  "version": "0.0.4-beta.18",
+  "version": "0.0.4-beta.33",
   "description": "A small, simple, and fast state management solution for React and React Native",
   "main": "src/index.ts",
   "module": "src/index.mjs",
@@ -11,8 +11,8 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": "./index.mjs",
+      "require": "./index.js"
     }
   },
   "bugs": {
@@ -23,12 +23,13 @@
     "url": "git+https://github.com/alok-shete/athrok.git"
   },
   "scripts": {
-    "build": "tsc && vite build && node build.js",
     "release": "pnpm run build",
-    "lint": "tsc",
-    "test": "vitest --silent=false --watch=false",
+    "format": "prettier 'src/**/*' 'test/**/*'  --write",
+    "test": "vitest --silent=false --watch=false ",
     "ui-test": " vitest --ui",
-    "test-coverage": "vitest run --coverage"
+    "prebuild": "rm -rf dist",
+    "test-coverage": "vitest run --coverage",
+    "build": "tsup"
   },
   "files": [
     "dist",
@@ -61,7 +62,8 @@
     "react": "*",
     "react-dom": "^18.3.1",
     "react-test-renderer": "^18.3.1",
-    "rollup-plugin-cleanup": "^3.2.1",
+    "terser": "^5.31.1",
+    "tsup": "^8.1.0",
     "typescript": "^5.4.5",
     "vite": "^5.2.11",
     "vitest": "^1.6.0"

@@ -10,14 +10,14 @@ import { LOG, checkStartString, isPromise } from "../utils/functions";
  */
 
 export class UninitializedStorage implements IAthrokSyncStorage {
-  private logWarningAndReturn = <T>(source: string, defaultValue: T) => {
-    return (): T => {
+  private logWarningAndReturn =
+    <T>(source: string, defaultValue: T) =>
+    (): T => {
       LOG.warn(
         `Attempted to access storage before initialization, method : ${source}`
       );
       return defaultValue;
     };
-  };
 
   getKeys = this.logWarningAndReturn("getKeys", []);
   getItem = this.logWarningAndReturn("getItem", null);
@@ -66,21 +66,18 @@ export class StorageManager {
     const { storage } = config;
     new StorageManager(config);
 
-    // Retrieve configuration data from storage
     const configDataPromise = storage.getItem(ATHROK_CONFIG_LABEL);
     const isAsync = isPromise(configDataPromise);
     const configDataString = isAsync
       ? await configDataPromise
       : (configDataPromise as string);
 
-    // Parse configuration data and set persistence keys
     const configData: { keys: string[] } = configDataString
       ? JSON.parse(configDataString)
       : {};
     configData.keys?.forEach((key) => StorageManager.persistenceKeys.add(key));
     StorageManager.syncPersistentConfig();
 
-    // Load persisted data into memory
     const allStoragePromises = Promise.all(
       Array.from(StorageManager.persistenceKeys).map(async (key: string) => {
         if (!checkStartString(key, ATHROK_KEY_LABEL)) {
@@ -107,7 +104,6 @@ export class StorageManager {
 
   /**
    * Adds a key to the set of persistence keys.
-   * @param key - The key to be persisted.
    */
   static setPersistenceKey(key: string) {
     StorageManager.persistenceKeys.add(key);
@@ -123,9 +119,6 @@ export class StorageManager {
 
   /**
    * Synchronizes persistence configuration with the storage.
-   *
-   * This method updates the configuration data in storage based on the current set
-   * of persistence keys.
    */
   private static syncPersistentConfig() {
     if (!(StorageManager.storage instanceof UninitializedStorage)) {
@@ -137,10 +130,10 @@ export class StorageManager {
   }
 }
 
-export const getPersistanceKeys = () => {
-  return Array.from(StorageManager.persistenceKeys);
-};
+export const getPersistanceKeys = () =>
+  Array.from(StorageManager.persistenceKeys).map((key) =>
+    key.replace(ATHROK_KEY_LABEL, "")
+  );
 
-export const clearPersistence = (key: string) => {
-  StorageManager.clearPersistence(key);
-};
+export const clearPersistence = (key: string) =>
+  StorageManager.clearPersistence(`${ATHROK_KEY_LABEL}${key}`);

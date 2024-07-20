@@ -22,7 +22,7 @@ export class StorageHandler<T> {
   #timeoutId: NodeJS.Timeout | undefined; // Timeout ID for debounce mechanism
   config: PartiallyRequired<
     IAthrokPersistConfig<T>,
-    "debounceTime" | "partial" | "merge"
+    "debounceTime" | "partial"
   >;
 
   /**
@@ -34,7 +34,6 @@ export class StorageHandler<T> {
     this.config = {
       debounceTime: 100,
       partial: (data) => data,
-      merge: shallowMerge,
       ...persisConfig,
     };
     StorageManager.setPersistenceKey(this.#key); // Set the key for persistence

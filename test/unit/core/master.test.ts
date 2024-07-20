@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 import { StorageHandler } from "../../../src/storage/handler";
-import { AthrokMaster } from "../../../src/store/master";
+import { AthrokMaster } from "../../../src/core/master";
 import { IAthrokStoreConfig } from "../../../src/utils/types";
 
 interface TestValue {
@@ -24,7 +24,7 @@ describe("AthrokMaster", () => {
     it("should initialize with correct initial value and listeners", () => {
       const initialValue = { key: "testKey", value: 42 };
       const master = new TestAthrokMaster(initialValue);
-      expect(master["initialValue"]).toBe(initialValue);
+      expect(master["currentValue"]).toBe(initialValue);
       expect(master["listeners"].size).toBe(0); // Initially, no listeners are added
     });
 
@@ -177,7 +177,6 @@ describe("AthrokMaster", () => {
 
       const result = master.get();
 
-      console.log(result);
       expect(result).toEqual({ ...initialValue, ...storedValue });
       expect(storageHandlerGetItemMock).toHaveBeenCalledTimes(1);
       // expect(mockStorageHandler.config.merge).toHaveBeenCalledTimes(1);
@@ -205,7 +204,6 @@ describe("AthrokMaster", () => {
       storageHandlerGetItemMock.mockReturnValue(storedValue);
       const result = master.get();
 
-      console.log(result);
       expect(result).toBe(20);
       expect(storageHandlerGetItemMock).toHaveBeenCalledTimes(1);
     });
@@ -232,7 +230,6 @@ describe("AthrokMaster", () => {
       storageHandlerGetItemMock.mockReturnValue(storedValue);
       const result = master.get();
 
-      console.log(result);
       expect(result).toEqual({ ...initialValue, ...storedValue });
       expect(storageHandlerGetItemMock).toHaveBeenCalledTimes(1);
     });
@@ -259,7 +256,6 @@ describe("AthrokMaster", () => {
       storageHandlerGetItemMock.mockReturnValue(storedValue);
       const result = master.get();
 
-      console.log(result);
       expect(result).toEqual({ ...initialValue });
       expect(storageHandlerGetItemMock).toHaveBeenCalledTimes(1);
     });

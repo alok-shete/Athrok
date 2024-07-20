@@ -38,7 +38,6 @@ describe("StorageHandler", () => {
     );
     expect(handler.config).toEqual({
       partial: expect.any(Function),
-      merge: expect.any(Function),
       ...config,
     });
   });
